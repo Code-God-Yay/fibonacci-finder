@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fibonacci Finder</title>
+    <style>
+        :root { --bg: #f8fafc; --card: #ffffff; --primary: #3b82f6; --text: #1e293b; --border: #e2e8f0; --track: #f1f5f9; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .container { background: var(--card); width: 90%; max-width: 650px; padding: 40px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid var(--border); }
+        h1 { font-size: 1.1rem; font-weight: 600; margin: 0 0 30px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; }
+        .input-group { display: flex; gap: 12px; margin-bottom: 40px; }
+        input { flex: 1; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border); font-size: 1.1rem; outline: none; transition: all 0.2s; font-family: inherit; }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        button { padding: 14px 24px; border-radius: 8px; border: none; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
+        .btn-run { background: var(--primary); color: white; min-width: 120px; }
+        .btn-run:hover { background: #2563eb; transform: translateY(-1px); }
+        .btn-run:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+        .btn-alt { background: #f8fafc; color: #64748b; border: 1px solid var(--border); }
+        .btn-alt:hover { background: #fff; border-color: #cbd5e1; }
+        .progress-section { margin-bottom: 40px; }
+        .progress-meta { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 500; color: #94a3b8; margin-bottom: 12px; }
+        .progress-track { height: 10px; background: var(--track); border-radius: 20px; overflow: hidden; border: 1px solid var(--border); }
+        #progress-bar { width: 0%; height: 100%; background: var(--primary); border-radius: 20px; transition: width 0.1s linear; }
+        #output { background: #fcfdfe; padding: 20px; border-radius: 8px; height: 160px; overflow: auto; word-break: break-all; font-family: "SF Mono", "Fira Code", monospace; font-size: 0.85rem; color: #475569; border: 1px solid var(--border); line-height: 1.6; }
+        .footer-stats { display: flex; justify-content: space-between; margin-top: 30px; font-size: 0.75rem; color: #94a3b8; padding-top: 20px; border-top: 1px solid var(--border); }
+        .stat-val { color: var(--text); font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fibonacci Finder</h1>
+        <div class="input-group">
+            <input type="number" id="n-val" value="1000000" placeholder="Position (n)">
+            <button class="btn-run" id="run-btn" onclick="execute()">Compute</button>
+            <button class="btn-alt" onclick="saveAsFile()">Download</button>
+        </div>
+        <div class="progress-section">
+            <div class="progress-meta">
+                <span id="status-text">Status: Ready</span>
+                <span id="percent-text">0%</span>
+            </div>
+            <div class="progress-track">
+                <div id="progress-bar"></div>
+            </div>
+        </div>
+        <div id="output">Ready for input. Results appear here.</div>
+        <div class="footer-stats">
+            <span>Latency: <span id="m-time" class="stat-val">0.000s</span></span>
+            <span>Digits: <span id="s-len" class="stat-val">0</span></span>
+            <span>Engine: <span class="stat-val">Fast Doubling O(log n)</span></span>
+        </div>
+    </div>
+
+    <script>
+        const workerBlob = new Blob([`
+            self.onmessage = function(e) {
+                const n = BigInt(e.data);
+                const t0 = performance.now();
+                if (n === 0n) { self.postMessage({t:'r', v:'0', time: 0}); return; }
+                let a = 0n, b = 1n;
+                const bin = n.toString(2);
+                const len = bin.length;
+                for (let i = 0; i < len; i++) {
+                    let c = a * ((b << 1n) - a);
+                    let d = a * a + b * b;
+                    if (bin[i] === '0') { a = c; b = d; }
+                    else { a = d; b = c + d; }
+                    if (i % 400 === 0) {
+                        self.postMessage({t:'p', v: Math.floor((i/len)*100)});
+                    }
+                }
+                const resStr = a.toString();
+                const t1 = performance.now();
+                self.postMessage({t:'r', v: resStr, time: t1 - t0});
+            };
+        `], {type: 'application/javascript'});
+
+        const worker = new Worker(URL.createObjectURL(workerBlob));
+        let currentResult = "";
+
+        function execute() {
+            const n = document.getElementById('n-val').value;
+            const btn = document.getElementById('run-btn');
+            const bar = document.getElementById('progress-bar');
+            const status = document.getElementById('status-text');
+            const percent = document.getElementById('percent-text');
+            const out = document.getElementById('output');
+
+            if (n === "" || n < 0) return alert("Please enter a positive integer.");
+
+            btn.disabled = true;
+            status.innerText = "Status: Processing Math";
+            out.innerText = "Computing massive integer...";
+            bar.style.width = '0%';
+            percent.innerText = '0%';
+            
+            worker.postMessage(n);
+
+            worker.onmessage = (e) => {
+                if (e.data.t === 'p') {
+                    bar.style.width = e.data.v + '%';
+                    percent.innerText = e.data.v + '%';
+                } else {
+                    currentResult = e.data.v;
+                    bar.style.width = '100%';
+                    percent.innerText = '100%';
+                    out.innerText = currentResult;
+                    status.innerText = "Status: Complete";
+                    document.getElementById('m-time').innerText = (e.data.time/1000).toFixed(3) + "s";
+                    document.getElementById('s-len').innerText = currentResult.length.toLocaleString();
+                    btn.disabled = false;
+                }
+            };
+        }
+
+        function saveAsFile() {
+            if (!currentResult) return alert("Compute a result first.");
+            const b = new Blob([currentResult], {type: 'text/plain'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(b);
+            a.download = `fibonacci_${document.getElementById('n-val').value}.txt`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
