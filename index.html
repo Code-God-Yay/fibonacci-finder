@@ -1,127 +1,481 @@
 <!DOCTYPE html>
-<html lang="en-AU">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fibonacci Finder</title>
-    <style>
-        :root { --bg: #f8fafc; --card: #ffffff; --primary: #3b82f6; --text: #1e293b; --border: #e2e8f0; --track: #f1f5f9; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; }
-        .container { background: var(--card); width: 90%; max-width: 650px; padding: 40px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid var(--border); }
-        h1 { font-size: 1.1rem; font-weight: 600; margin: 0 0 30px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; }
-        .input-group { display: flex; gap: 12px; margin-bottom: 40px; }
-        input { flex: 1; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border); font-size: 1.1rem; outline: none; transition: all 0.2s; font-family: inherit; }
-        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-        button { padding: 14px 24px; border-radius: 8px; border: none; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
-        .btn-run { background: var(--primary); color: white; min-width: 120px; }
-        .btn-run:hover { background: #2563eb; transform: translateY(-1px); }
-        .btn-run:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
-        .btn-alt { background: #f8fafc; color: #64748b; border: 1px solid var(--border); }
-        .btn-alt:hover { background: #fff; border-color: #cbd5e1; }
-        .progress-section { margin-bottom: 40px; }
-        .progress-meta { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 500; color: #94a3b8; margin-bottom: 12px; }
-        .progress-track { height: 10px; background: var(--track); border-radius: 20px; overflow: hidden; border: 1px solid var(--border); }
-        #progress-bar { width: 0%; height: 100%; background: var(--primary); border-radius: 20px; transition: width 0.1s linear; }
-        #output { background: #fcfdfe; padding: 20px; border-radius: 8px; height: 160px; overflow: auto; word-break: break-all; font-family: "SF Mono", "Fira Code", monospace; font-size: 0.85rem; color: #475569; border: 1px solid var(--border); line-height: 1.6; }
-        .footer-stats { display: flex; justify-content: space-between; margin-top: 30px; font-size: 0.75rem; color: #94a3b8; padding-top: 20px; border-top: 1px solid var(--border); }
-        .stat-val { color: var(--text); font-weight: 600; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fibonacci Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #080e1a;
+    --surface: #0d1526;
+    --panel:   #111d33;
+    --border:  #1e3050;
+    --accent:  #00d4aa;
+    --accent2: #0090ff;
+    --muted:   #4a6680;
+    --text:    #c8ddf0;
+    --dim:     #6a8aaa;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  /* subtle grid overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.25;
+    pointer-events: none;
+  }
+
+  .shell {
+    width: 560px;
+    max-width: 100%;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── header ── */
+  .header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .header h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 1.2rem;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+    border-radius: 2px;
+    letter-spacing: 0.06em;
+  }
+  .threads-info {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--dim);
+  }
+
+  /* ── card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  /* ── label ── */
+  label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  /* ── input ── */
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: end;
+    margin-bottom: 1rem;
+  }
+
+  input[type="number"], select {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.05rem;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button { display: none; }
+  input[type="number"]:focus, select:focus {
+    border-color: var(--accent);
+  }
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    font-size: 0.82rem;
+    padding: 10px 12px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a6680'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+
+  /* ── button ── */
+  .run-btn {
+    width: 100%;
+    padding: 11px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 0.5rem;
+  }
+  .run-btn:hover   { opacity: 0.88; }
+  .run-btn:active  { transform: scale(0.98); }
+  .run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── progress bar ── */
+  .progress-track {
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 1rem 0 0;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    border-radius: 2px;
+    transition: width 0.2s ease;
+  }
+  .progress-fill.indeterminate {
+    animation: slide 1.2s ease-in-out infinite;
+    width: 40% !important;
+  }
+  @keyframes slide {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+  }
+
+  /* ── stats row ── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .stat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  /* ── output box ── */
+  .out-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .out-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+  .copy-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    color: var(--dim);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 8px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  pre#out {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--text);
+    height: 120px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  pre#out.ready   { color: var(--dim); }
+  pre#out.working { color: var(--muted); }
+  pre#out.done    { color: var(--accent); }
+  pre#out.error   { color: #ff5e57; }
+
+  .truncation-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--dim);
+    margin-top: 5px;
+    text-align: right;
+  }
+
+  /* ── footer ── */
+  .footer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 1.5rem;
+    letter-spacing: 0.04em;
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>Fibonacci Finder</h1>
-        <div class="input-group">
-            <input type="number" id="n-val" value="1000000" placeholder="Position (n)">
-            <button class="btn-run" id="run-btn" onclick="execute()">Compute</button>
-            <button class="btn-alt" onclick="saveAsFile()">Download</button>
-        </div>
-        <div class="progress-section">
-            <div class="progress-meta">
-                <span id="status-text">Status: Ready</span>
-                <span id="percent-text">0%</span>
-            </div>
-            <div class="progress-track">
-                <div id="progress-bar"></div>
-            </div>
-        </div>
-        <div id="output">Ready for input. Results appear here.</div>
-        <div class="footer-stats">
-            <span>Latency: <span id="m-time" class="stat-val">0.000s</span></span>
-            <span>Digits: <span id="s-len" class="stat-val">0</span></span>
-            <span>Engine: <span class="stat-val">Fast Doubling O(log n)</span></span>
-        </div>
+<div class="shell">
+
+  <div class="header">
+    <h1>Fibonacci</h1>
+    <span class="badge">Fast Doubling</span>
+    <span class="threads-info" id="thread-info">— threads</span>
+  </div>
+
+  <div class="card">
+    <div>
+      <label for="n">Index n &nbsp;→&nbsp; compute F(n)</label>
+      <input id="n" type="number" value="1000000" min="0" max="10000000" step="1000">
     </div>
 
-    <script>
-        const workerBlob = new Blob([`
-            self.onmessage = function(e) {
-                const n = BigInt(e.data);
-                const t0 = performance.now();
-                if (n === 0n) { self.postMessage({t:'r', v:'0', time: 0}); return; }
-                let a = 0n, b = 1n;
-                const bin = n.toString(2);
-                const len = bin.length;
-                for (let i = 0; i < len; i++) {
-                    let c = a * ((b << 1n) - a);
-                    let d = a * a + b * b;
-                    if (bin[i] === '0') { a = c; b = d; }
-                    else { a = d; b = c + d; }
-                    if (i % 400 === 0) {
-                        self.postMessage({t:'p', v: Math.floor((i/len)*100)});
-                    }
-                }
-                const resStr = a.toString();
-                const t1 = performance.now();
-                self.postMessage({t:'r', v: resStr, time: t1 - t0});
-            };
-        `], {type: 'application/javascript'});
+    <div class="input-row" style="margin-top:1rem">
+      <div>
+        <label for="mode">Compute mode</label>
+        <select id="mode">
+          <option value="main">Main thread (blocking)</option>
+          <option value="worker" selected>Web Worker (non-blocking)</option>
+        </select>
+      </div>
+    </div>
 
-        const worker = new Worker(URL.createObjectURL(workerBlob));
-        let currentResult = "";
+    <button class="run-btn" id="run-btn" onclick="run()">▶ Run</button>
+    <div class="progress-track"><div class="progress-fill" id="prog"></div></div>
+  </div>
 
-        function execute() {
-            const n = document.getElementById('n-val').value;
-            const btn = document.getElementById('run-btn');
-            const bar = document.getElementById('progress-bar');
-            const status = document.getElementById('status-text');
-            const percent = document.getElementById('percent-text');
-            const out = document.getElementById('output');
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Time</div><div class="stat-val" id="t-val">—</div></div>
+    <div class="stat"><div class="stat-label">Digits</div><div class="stat-val" id="d-val">—</div></div>
+    <div class="stat"><div class="stat-label">Mode</div><div class="stat-val" id="m-val">—</div></div>
+  </div>
 
-            if (n === "" || n < 0) return alert("Please enter a positive integer.");
+  <div class="card" style="padding: 1rem 1.25rem;">
+    <div class="out-header">
+      <span class="out-label">Result</span>
+      <button class="copy-btn" id="copy-btn" onclick="copyResult()">copy</button>
+    </div>
+    <pre id="out" class="ready">ready — enter an index and press run</pre>
+    <div class="truncation-note" id="trunc-note"></div>
+  </div>
 
-            btn.disabled = true;
-            status.innerText = "Status: Processing Math";
-            out.innerText = "Computing massive integer...";
-            bar.style.width = '0%';
-            percent.innerText = '0%';
-            
-            worker.postMessage(n);
+  <div class="footer">uses fast doubling — O(log n) multiplications</div>
+</div>
 
-            worker.onmessage = (e) => {
-                if (e.data.t === 'p') {
-                    bar.style.width = e.data.v + '%';
-                    percent.innerText = e.data.v + '%';
-                } else {
-                    currentResult = e.data.v;
-                    bar.style.width = '100%';
-                    percent.innerText = '100%';
-                    out.innerText = currentResult;
-                    status.innerText = "Status: Complete";
-                    document.getElementById('m-time').innerText = (e.data.time/1000).toFixed(3) + "s";
-                    document.getElementById('s-len').innerText = currentResult.length.toLocaleString();
-                    btn.disabled = false;
-                }
-            };
-        }
+<script>
+  const THREADS = navigator.hardwareConcurrency || 4;
+  document.getElementById('thread-info').textContent = THREADS + ' logical cores';
 
-        function saveAsFile() {
-            if (!currentResult) return alert("Compute a result first.");
-            const b = new Blob([currentResult], {type: 'text/plain'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(b);
-            a.download = `fibonacci_${document.getElementById('n-val').value}.txt`;
-            a.click();
-        }
-    </script>
+  // ── Fast-doubling Fibonacci (BigInt) ──
+  function fib(n) {
+    let a = 0n, b = 1n;
+    const bin = n.toString(2);
+    for (let i = 0; i < bin.length; i++) {
+      const c = a * ((b << 1n) - a);
+      const d = a * a + b * b;
+      if (bin[i] === '0') { a = c; b = d; }
+      else                { a = d; b = c + d; }
+    }
+    return a;
+  }
+
+  // ── Worker blob (same algorithm, postMessage result) ──
+  const WORKER_SRC = `
+    self.onmessage = function(e) {
+      const n = BigInt(e.data.n);
+      let a = 0n, b = 1n;
+      const bin = n.toString(2);
+      for (let i = 0; i < bin.length; i++) {
+        const c = a * ((b << 1n) - a);
+        const d = a * a + b * b;
+        if (bin[i] === '0') { a = c; b = d; }
+        else                { a = d; b = c + d; }
+      }
+      self.postMessage(a.toString());
+    };
+  `;
+
+  let fullResult = '';
+  let isRunning = false;
+
+  const DISPLAY_LIMIT = 2000;
+
+  function setUI(running) {
+    isRunning = running;
+    document.getElementById('run-btn').disabled = running;
+    const prog = document.getElementById('prog');
+    if (running) {
+      prog.classList.add('indeterminate');
+    } else {
+      prog.classList.remove('indeterminate');
+      prog.style.width = running ? '0%' : '100%';
+      setTimeout(() => { prog.style.width = '0%'; }, 600);
+    }
+  }
+
+  function displayResult(str, time, mode) {
+    fullResult = str;
+    const digits = str.length;
+    document.getElementById('t-val').textContent = time + 's';
+    document.getElementById('d-val').textContent = digits.toLocaleString();
+    document.getElementById('m-val').textContent = mode;
+
+    const out = document.getElementById('out');
+    const note = document.getElementById('trunc-note');
+
+    out.className = 'done';
+    if (digits <= DISPLAY_LIMIT) {
+      out.textContent = str;
+      note.textContent = '';
+    } else {
+      const head = str.slice(0, 800);
+      const tail = str.slice(-200);
+      out.textContent = head + '\n … ' + (digits - 1000).toLocaleString() + ' digits omitted … \n' + tail;
+      note.textContent = 'Showing first 800 and last 200 digits of ' + digits.toLocaleString() + ' total — use copy for full value';
+    }
+  }
+
+  async function run() {
+    if (isRunning) return;
+    const raw = document.getElementById('n').value.trim();
+    const n = parseInt(raw, 10);
+    if (!raw || isNaN(n) || n < 0) {
+      showError('Enter a valid non-negative integer.');
+      return;
+    }
+    const mode = document.getElementById('mode').value;
+
+    const out = document.getElementById('out');
+    out.className = 'working';
+    out.textContent = 'computing F(' + n.toLocaleString() + ') …';
+    document.getElementById('trunc-note').textContent = '';
+    document.getElementById('t-val').textContent = '—';
+    document.getElementById('d-val').textContent = '—';
+    document.getElementById('m-val').textContent = '—';
+    fullResult = '';
+
+    setUI(true);
+    const t0 = performance.now();
+
+    try {
+      if (mode === 'main') {
+        // Blocking — main thread, may freeze UI for large n
+        const result = fib(BigInt(n));
+        const elapsed = ((performance.now() - t0) / 1000).toFixed(3);
+        displayResult(result.toString(), elapsed, 'main');
+      } else {
+        // Non-blocking via Web Worker
+        await new Promise((resolve, reject) => {
+          const blob = new Blob([WORKER_SRC], { type: 'text/javascript' });
+          const url = URL.createObjectURL(blob);
+          const worker = new Worker(url);
+          worker.onmessage = e => {
+            URL.revokeObjectURL(url);
+            worker.terminate();
+            const elapsed = ((performance.now() - t0) / 1000).toFixed(3);
+            displayResult(e.data, elapsed, 'worker');
+            resolve();
+          };
+          worker.onerror = err => {
+            URL.revokeObjectURL(url);
+            worker.terminate();
+            reject(err);
+          };
+          worker.postMessage({ n: n.toString() });
+        });
+      }
+    } catch (err) {
+      showError('Error: ' + (err.message || err));
+    }
+
+    setUI(false);
+  }
+
+  function showError(msg) {
+    const out = document.getElementById('out');
+    out.className = 'error';
+    out.textContent = msg;
+    setUI(false);
+  }
+
+  function copyResult() {
+    if (!fullResult) return;
+    navigator.clipboard.writeText(fullResult).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'copied!';
+      setTimeout(() => { btn.textContent = 'copy'; }, 1500);
+    });
+  }
+
+  // Allow Enter key to trigger run
+  document.getElementById('n').addEventListener('keydown', e => {
+    if (e.key === 'Enter') run();
+  });
+</script>
 </body>
 </html>
